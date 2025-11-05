@@ -10,7 +10,7 @@ app = FastAPI(title="Legal Document Search API")
 """ Configure CORS middleware to allow requests from the frontend """
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173","https://legal-document-search-portal-beryl.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
