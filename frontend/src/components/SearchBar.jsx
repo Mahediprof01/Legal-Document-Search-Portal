@@ -6,11 +6,11 @@ export default function SearchBar({ onSearch, isLoading }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmed = query.trim();
-    if (!trimmed) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
       return;
     }
-    onSearch(trimmed);
+    onSearch(trimmedQuery);
   };
 
   return (

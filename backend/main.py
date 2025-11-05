@@ -4,9 +4,10 @@ from pydantic import BaseModel
 from typing import List
 import uvicorn
 
+""" Initialize the FastAPI application for legal document searching """
 app = FastAPI(title="Legal Document Search API")
 
-# Allow requests from our frontend during development
+""" Configure CORS middleware to allow requests from the frontend """
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173"],
@@ -16,9 +17,11 @@ app.add_middleware(
 )
 
 class QueryRequest(BaseModel):
+    """Represents a search query request from the client"""
     query: str
 
 class LegalDocument(BaseModel):
+    """Represents a single legal document in search results"""
     id: int
     title: str
     summary: str
@@ -27,11 +30,12 @@ class LegalDocument(BaseModel):
     date_filed: str
 
 class SearchResponse(BaseModel):
+    """Represents the response returned to the client after a search"""
     query: str
     total_results: int
     documents: List[LegalDocument]
 
-# Mock database - in production this would connect to a real legal database
+""" Mock data of legal documents  """
 MOCK_LEGAL_DOCS = [
     {
         "id": 1,
@@ -84,29 +88,27 @@ MOCK_LEGAL_DOCS = [
 ]
 
 def search_documents(query: str) -> List[LegalDocument]:
-    """Search through our mock database and return matching docs."""
     search_term = query.lower()
-    matches = []
+    matching_documents = []
     
     for document in MOCK_LEGAL_DOCS:
-        title_match = search_term in document["title"].lower()
-        summary_match = search_term in document["summary"].lower()
+        is_in_title = search_term in document["title"].lower()
+        is_in_summary = search_term in document["summary"].lower()
         
-        # Also check individual words from the query
-        word_matches = any(
+        individual_word_matches = any(
             word in document["title"].lower() or word in document["summary"].lower()
             for word in search_term.split()
         )
         
-        if title_match or summary_match or word_matches:
-            matches.append(document)
+        if is_in_title or is_in_summary or individual_word_matches:
+            matching_documents.append(document)
     
-    # Sort by relevance and return top 3
-    matches.sort(key=lambda doc: doc["relevance_score"], reverse=True)
-    return matches[:3]
+    matching_documents.sort(key=lambda doc: doc["relevance_score"], reverse=True)
+    return matching_documents[:3]
 
 @app.get("/")
 def root():
+    """Health check endpoint - returns API status and version info"""
     return {
         "service": "Legal Document Search API",
         "status": "operational",
@@ -115,30 +117,23 @@ def root():
 
 @app.post("/generate", response_model=SearchResponse)
 async def generate_search_results(request: QueryRequest):
-    """Main endpoint for searching legal documents."""
     query_text = request.query.strip()
     
-    # Basic validation
     if not query_text:
-        raise HTTPException(status_code=400, detail="Query cannot be empty")
+        raise HTTPException(
+            status_code=400, 
+            detail="Query cannot be empty"
+        )
     
     if len(query_text) > 500:
         raise HTTPException(
             status_code=400, 
-            detail="Query too long. Maximum 500 characters."
+            detail="Query too long. Maximum 500 characters allowed."
         )
     
-    # Get matching documents
     found_docs = search_documents(query_text)
     
-    # If nothing matches, just return the top 3 highest-rated docs
-    if not found_docs:
-        found_docs = sorted(
-            MOCK_LEGAL_DOCS, 
-            key=lambda d: d["relevance_score"], 
-            reverse=True
-        )[:3]
-    
+    # Return search results (will be empty list if no matches found)
     return SearchResponse(
         query=query_text,
         total_results=len(found_docs),
@@ -147,6 +142,7 @@ async def generate_search_results(request: QueryRequest):
 
 @app.get("/health")
 def health_check():
+    """Health check endpoint for Docker and load balancers"""
     return {"status": "healthy"}
 
 if __name__ == "__main__":

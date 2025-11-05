@@ -9,9 +9,11 @@ import EmptyState from './components/EmptyState';
 import Footer from './components/Footer';
 import './App.css';
 
+// API URL from environment
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function App() {
+  // State management for search functionality
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -30,7 +32,7 @@ function App() {
       
       setSearchResults(data);
     } catch (error) {
-      if (error.response) {
+      if (error.response){
         setErrorMsg(error.response.data.detail || 'An error occurred while searching');
       } else if (error.request) {
         setErrorMsg('Unable to connect to the server. Please ensure the backend is running.');
@@ -52,14 +54,16 @@ function App() {
         {errorMsg && <ErrorBanner message={errorMsg} />}
 
         {isSearching && <LoadingSpinner />}
-
+        
         {searchResults && !isSearching && (
-          <ResultsList documents={searchResults.documents} query={searchResults.query} total={searchResults.total_results} />
+          <ResultsList 
+            documents={searchResults.documents} 
+            query={searchResults.query} 
+            total={searchResults.total_results} 
+          />
         )}
-
         {!isSearching && !errorMsg && !searchResults && <EmptyState />}
       </div>
-
       <Footer />
     </div>
   );
